@@ -1,7 +1,20 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      // Firebase Storage
+      { protocol: "https", hostname: "firebasestorage.googleapis.com", pathname: "/**" },
+      // Google profile photos (if you add Google sign-in)
+      { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
+    ],
+  },
+  // (Optional) Helpful when migrating routes; purely dev ergonomics
+  experimental: {
+    typedRoutes: true,
+  },
 };
 
 export default nextConfig;

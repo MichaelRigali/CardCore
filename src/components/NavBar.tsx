@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { getAuth, signOut } from 'firebase/auth';
 import { useAuthStore } from '@/store/authStore';
 
-export default function Navbar() {
+export default function NavBar() {
   const user = useAuthStore((state) => state.user);
 
   return (
@@ -12,16 +13,22 @@ export default function Navbar() {
         CardCore
       </Link>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-4">
         {user ? (
           <>
             <Link href="/collection" className="hover:underline">
               Collection
             </Link>
-            <Link href="/add-card" className="hover:underline">
+            <Link href="/collection/new" className="hover:underline">
               Add Card
             </Link>
-            {/* Later: Add LogoutButton here */}
+            <button
+              onClick={() => signOut(getAuth())}
+              className="rounded bg-gray-700 px-3 py-1 hover:bg-gray-600"
+              aria-label="Log out"
+            >
+              Log out
+            </button>
           </>
         ) : (
           <>
