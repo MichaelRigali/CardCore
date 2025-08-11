@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/firebase/client';
 import { useAuthStore } from '@/store/authStore';
 import { ensureUserDoc } from '@/firebase/postAuth';
+import { authErrorMessage } from '@/utils/authErrors';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,7 +41,7 @@ export default function LoginPage() {
       router.push('/collection');
     } catch (err: any) {
       console.error('[login] Login failed:', err);
-      setError(err.message || 'Failed to sign in');
+      setError(authErrorMessage(err?.code));
     } finally {
       setIsSubmitting(false);
     }

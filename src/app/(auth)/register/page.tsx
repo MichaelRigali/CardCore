@@ -7,6 +7,7 @@ import { auth } from '@/firebase/client';
 import { useAuthStore } from '@/store/authStore';
 import { ensureUserDoc } from '@/firebase/postAuth';
 import { testFirebaseAuth } from '@/utils/firebaseTest';
+import { authErrorMessage } from '@/utils/authErrors';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -56,6 +57,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     setFieldErrors({});
+    setSuccess(false);
 
     if (!validateForm()) {
       return;
@@ -88,7 +90,7 @@ export default function RegisterPage() {
       }, 1000);
     } catch (err: any) {
       console.error('[register] Registration failed:', err);
-      setError(err.message || 'Failed to create account');
+      setError(authErrorMessage(err?.code));
     } finally {
       setIsSubmitting(false);
     }
