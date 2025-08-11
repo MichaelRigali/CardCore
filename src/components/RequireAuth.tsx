@@ -1,17 +1,35 @@
 'use client';
-import { useAuthStore } from "@/store/authStore";
-import Link from "next/link";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/authStore';
 
 export default function RequireAuth({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const user = useAuthStore(s => s.user);
-  if (user === undefined) return null; // optional: a loader while auth hydrates
-  if (!user) {
-    return (
-      <main className="p-6">
-        <h1 className="text-xl font-semibold mb-2">Please sign in</h1>
-        <Link className="underline" href="/login">Go to login</Link>
-      </main>
-    );
-  }
+  const initialized = useAuthStore(s => s.initialized);
+
+  useEffect(() => {
+    if (!initialized) return;
+    if (!user) router.replace('/login');
+  }, [initialized, user, router]);
+
+  if (!initialized) return (
+    <main className="p-6">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p className="mt-2 text-gray-600">Loading...</p>
+      </div>
+    </main>
+  );
+  
+  if (!user) return (
+    <main className="p-6">
+      <div className="text-center">
+        <p className="text-gray-600">Redirecting...</p>
+      </div>
+    </main>
+  );
+
   return <>{children}</>;
 }

@@ -23,7 +23,7 @@ export default function CollectionPage() {
         <ClientCards />
 
         {/* Fallback for empty state (optional) */}
-        {/* <p className="text-gray-600">No cards yet — click “Add Card” to create your first entry.</p> */}
+        {/* <p className="text-gray-600">No cards yet — click "Add Card" to create your first entry.</p> */}
       </main>
     </RequireAuth>
   );

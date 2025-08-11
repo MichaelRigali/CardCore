@@ -1,7 +1,7 @@
 // src/firebase/client.ts
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { initializeFirestore, getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // ✅ Replace with your Firebase project settings from Firebase Console
@@ -15,11 +15,50 @@ const firebaseConfig = {
 };
 
 // ✅ Only initialize once (avoids Fast Refresh errors in dev)
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// Force long polling in development to avoid WebChannel 400 errors
+const forceLongPolling = process.env.NODE_ENV !== 'production';
+
+// Clear any existing Firestore instances to force re-initialization with our settings
+if (typeof window !== 'undefined' && forceLongPolling) {
+  // @ts-ignore - accessing internal Firebase state
+  if (app._firestoreInstances) {
+    // @ts-ignore
+    delete app._firestoreInstances;
+  }
+}
+
+// Initialize Firestore with forced long-polling in development
+let db: ReturnType<typeof getFirestore>;
+try {
+  db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: false,
+    experimentalForceLongPolling: forceLongPolling,
+  });
+  console.log('[firebase] Firestore initialized with long-polling settings');
+} catch (error) {
+  // If initialization fails, fall back to getFirestore but log the error
+  console.warn('[firebase] Firestore initialization failed, falling back to default:', error);
+  db = getFirestore(app);
+}
+
+// Log settings for debugging
+if (typeof window !== 'undefined') {
+  console.log('[firestore:init]', {
+    env: process.env.NODE_ENV,
+    forceLongPolling,
+    timestamp: new Date().toISOString(),
+    firestoreInstance: db.constructor.name,
+  });
+  
+  // Note: Firestore settings are not accessible after initialization
+  // The settings we applied during initializeFirestore should be active
+}
 
 // ✅ Export Firebase services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export { db };
 export const storage = getStorage(app);
 
 // ✅ Optional: connect to local emulators if enabled

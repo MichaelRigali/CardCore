@@ -11,10 +11,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
     ],
   },
-  // (Optional) Helpful when migrating routes; purely dev ergonomics
-  experimental: {
-    typedRoutes: true,
-  },
 };
 
 export default nextConfig;
