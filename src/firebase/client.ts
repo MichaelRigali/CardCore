@@ -17,43 +17,14 @@ const firebaseConfig = {
 // ✅ Only initialize once (avoids Fast Refresh errors in dev)
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Force long polling in development to avoid WebChannel 400 errors
-const forceLongPolling = process.env.NODE_ENV !== 'production';
-
-// Clear any existing Firestore instances to force re-initialization with our settings
-if (typeof window !== 'undefined' && forceLongPolling) {
-  // @ts-ignore - accessing internal Firebase state
-  if (app._firestoreInstances) {
-    // @ts-ignore
-    delete app._firestoreInstances;
-  }
-}
-
-// Initialize Firestore with forced long-polling in development
+// Initialize Firestore with standard configuration
 let db: ReturnType<typeof getFirestore>;
 try {
-  db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: false,
-    experimentalForceLongPolling: forceLongPolling,
-  });
-  console.log('[firebase] Firestore initialized with long-polling settings');
-} catch (error) {
-  // If initialization fails, fall back to getFirestore but log the error
-  console.warn('[firebase] Firestore initialization failed, falling back to default:', error);
   db = getFirestore(app);
-}
-
-// Log settings for debugging
-if (typeof window !== 'undefined') {
-  console.log('[firestore:init]', {
-    env: process.env.NODE_ENV,
-    forceLongPolling,
-    timestamp: new Date().toISOString(),
-    firestoreInstance: db.constructor.name,
-  });
-  
-  // Note: Firestore settings are not accessible after initialization
-  // The settings we applied during initializeFirestore should be active
+  console.log('[firebase] Firestore initialized successfully');
+} catch (error) {
+  console.warn('[firebase] Firestore initialization failed:', error);
+  db = getFirestore(app);
 }
 
 // ✅ Export Firebase services

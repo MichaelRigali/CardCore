@@ -18,6 +18,16 @@ export function authErrorMessage(code?: string) {
       return 'Sign-in was canceled. Please try again.';
     case 'auth/operation-not-allowed':
       return 'This sign-in method is not enabled.';
+    case 'auth/popup-blocked':
+      return 'Popup was blocked. Please allow popups for this site.';
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email using a different sign-in method.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact support.';
+    case 'auth/requires-recent-login':
+      return 'Please sign in again to continue.';
     default:
       return 'Something went wrong. Please try again.';
   }

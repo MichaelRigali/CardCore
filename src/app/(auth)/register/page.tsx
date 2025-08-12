@@ -8,12 +8,15 @@ import { useAuthStore } from '@/store/authStore';
 import { ensureUserDoc } from '@/firebase/postAuth';
 import { testFirebaseAuth } from '@/utils/firebaseTest';
 import { authErrorMessage } from '@/utils/authErrors';
+import { googleSignInWithPopupThenRedirectFallback, googleHandleRedirectResult } from '@/firebase/googleSignIn';
+import { GoogleButton } from '@/components/GoogleButton';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -33,6 +36,18 @@ export default function RegisterPage() {
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
   }, []);
+
+  // Handle Google redirect result on mount
+  useEffect(() => {
+    (async () => {
+      const cred = await googleHandleRedirectResult();
+      if (cred?.user) {
+        await ensureUserDoc(cred.user);
+        setUser(cred.user);
+        router.push('/collection');
+      }
+    })();
+  }, [setUser, router]);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -88,11 +103,45 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/collection');
       }, 1000);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { code?: string };
       console.error('[register] Registration failed:', err);
-      setError(authErrorMessage(err?.code));
+      setError(authErrorMessage(error?.code));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setGoogleLoading(true);
+    console.log('[register] Starting Google sign-in process...');
+
+    try {
+      const cred = await googleSignInWithPopupThenRedirectFallback();
+      if (cred?.user) {
+        console.log('[register] Google sign-in success, user signed in:', cred.user.uid);
+        
+        // Set user in Zustand store immediately after successful auth
+        console.log('[register] Setting user in Zustand store...');
+        setUser(cred.user);
+        
+        // Try to create Firestore doc, but don't let it block navigation
+        console.log('[register] Calling ensureUserDoc (non-blocking)...');
+        ensureUserDoc(cred.user).catch((e) => {
+          console.warn('[register] ensureUserDoc failed, but continuing:', e);
+        });
+        
+        console.log('[register] Success! Navigating to /collection');
+        router.push('/collection');
+      }
+      // else redirect flow will handle itself
+    } catch (err: unknown) {
+      const error = err as { code?: string };
+      console.error('[register] Google sign-in failed:', err);
+      setError(authErrorMessage(error?.code));
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -197,12 +246,27 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || googleLoading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or</span>
+          </div>
+        </div>
+
+        <GoogleButton
+          onClick={handleGoogleSignIn}
+          loading={googleLoading}
+          disabled={isSubmitting}
+        />
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
