@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/firebase/client';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthUser } from '@/store/useAuthStore';
 import { ensureUserDoc } from '@/firebase/postAuth';
 import { testFirebaseAuth } from '@/utils/firebaseTest';
 import { authErrorMessage } from '@/utils/authErrors';
@@ -21,7 +21,12 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
-  const setUser = useAuthStore(s => s.setUser);
+  const user = useAuthUser();
+
+  // Redirect if already signed in (effect, not render)
+  useEffect(() => {
+    if (user) router.replace('/collection');
+  }, [user, router]);
 
   // Test Firebase connectivity on mount
   useEffect(() => {
@@ -43,11 +48,11 @@ export default function RegisterPage() {
       const cred = await googleHandleRedirectResult();
       if (cred?.user) {
         await ensureUserDoc(cred.user);
-        setUser(cred.user);
+        // Providers will update the store; no setUser here
         router.push('/collection');
       }
     })();
-  }, [setUser, router]);
+  }, [router]);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -86,9 +91,7 @@ export default function RegisterPage() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       console.log('[register] Firebase Auth success, user created:', cred.user.uid);
       
-      // Set user in Zustand store immediately after successful auth
-      console.log('[register] Setting user in Zustand store...');
-      setUser(cred.user);
+      // Providers will update the store; no setUser here
       
       // Try to create Firestore doc, but don't let it block navigation
       console.log('[register] Calling ensureUserDoc (non-blocking)...');
@@ -122,9 +125,7 @@ export default function RegisterPage() {
       if (cred?.user) {
         console.log('[register] Google sign-in success, user signed in:', cred.user.uid);
         
-        // Set user in Zustand store immediately after successful auth
-        console.log('[register] Setting user in Zustand store...');
-        setUser(cred.user);
+        // Providers will update the store; no setUser here
         
         // Try to create Firestore doc, but don't let it block navigation
         console.log('[register] Calling ensureUserDoc (non-blocking)...');

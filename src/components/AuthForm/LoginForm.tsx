@@ -3,13 +3,13 @@
 
 import { useState } from 'react';
 import { loginUser } from '@/firebase/auth';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthUser } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const setUser = useAuthStore((state) => state.setUser);
+  const user = useAuthUser();
   const router = useRouter();
   const [error, setError] = useState('');
 
@@ -17,7 +17,7 @@ export default function LoginForm() {
     e.preventDefault();
     try {
       const userCred = await loginUser(email, password);
-      setUser(userCred.user);
+      // Providers will update the store; no setUser here
       router.push('/collection');
     } catch (err: any) {
       setError(err.message);

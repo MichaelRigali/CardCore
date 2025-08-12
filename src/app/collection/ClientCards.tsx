@@ -1,11 +1,11 @@
 // app/collection/ClientCards.tsx
 'use client';
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthUser } from "@/store/useAuthStore";
 import { fetchMyCards } from "@/data/cards";
 
 export default function ClientCards() {
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
